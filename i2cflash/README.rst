@@ -11,6 +11,7 @@ demonstrate use of I2C devices with PyFtdi_. It could also be useful to dump
 flash contents or recover from a bricked devices.
 
 .. _PyI2CFlash : https://github.com/eblot/pyi2cflash
+.. _Python: http://python.org/
 .. _PyFtdi : https://github.com/eblot/pyftdi
 
 Supported I2C flash devices
