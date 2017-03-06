@@ -31,13 +31,13 @@ from setuptools import find_packages, setup
 NAME = 'pyi2cflash'
 PACKAGES = find_packages(where='.')
 META_PATH = os.path.join('i2cflash', '__init__.py')
-KEYWORDS = ['driver','ftdi', 'usb', 'i2c', 'twi', 'flash', 'eeprom']
-CLASSIFIERS=[
+KEYWORDS = ['driver', 'ftdi', 'usb', 'i2c', 'twi', 'flash', 'eeprom']
+CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
     'Environment :: Other Environment',
     'Natural Language :: English',
     'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT',
+    'License :: OSI Approved :: MIT License',
     'Operating System :: MacOS :: MacOS X',
     'Operating System :: POSIX',
     'Programming Language :: Python :: 3.5',
@@ -95,4 +95,3 @@ if __name__ == '__main__':
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
     )
-
