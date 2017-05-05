@@ -94,4 +94,5 @@ if __name__ == '__main__':
         package_data={'i2cflash': ['*.rst']},
         classifiers=CLASSIFIERS,
         install_requires=INSTALL_REQUIRES,
+        python_requires='>=3.5',
     )

@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __title__ = 'pyi2cflash'
 __description__ = 'I2C eeprom device drivers (pure Python)'
 __uri__ = 'http://github.com/eblot/pyi2cflash'
