@@ -20,16 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from array import array as Array
-from hashlib import sha1
 from i2cflash.serialeeprom import SerialEepromManager
-from logging import StreamHandler, DEBUG
 from os import environ
 from pyftdi import FtdiLogger
-from pyftdi.misc import hexdump, pretty_size
-from random import randint, seed
+from pyftdi.misc import pretty_size
 from sys import stdout
 from time import time as now
+import logging
 import unittest
 
 
@@ -42,8 +39,8 @@ class SerialEepromTestCase(unittest.TestCase):
         print('Using FTDI device %s' % cls.ftdi_url)
 
     def setUp(self):
-        self.flash = SerialEepromManager.get_flash_device(self.ftdi_url, 
-                                                          '24AA32A', 0x57)
+        self.flash = SerialEepromManager.get_flash_device(self.ftdi_url,
+                                                          '24AA32A', 0x50)
 
     def tearDown(self):
         del self.flash
@@ -95,6 +92,11 @@ def suite():
 
 
 if __name__ == '__main__':
-    FtdiLogger.log.addHandler(StreamHandler(stdout))
-    # FtdiLogger.set_level(DEBUG)
+    FtdiLogger.log.addHandler(logging.StreamHandler(stdout))
+    level = environ.get('FTDI_LOGLEVEL', 'info').upper()
+    try:
+        loglevel = getattr(logging, level)
+    except AttributeError:
+        raise ValueError('Invalid log level: %s', level)
+    FtdiLogger.set_level(loglevel)
     unittest.main(defaultTest='suite')

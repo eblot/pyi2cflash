@@ -19,8 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from array import array as Array
-from binascii import hexlify
 from pyftdi.i2c import I2cController
 from re import match
 from time import sleep, time as now
@@ -33,6 +31,7 @@ class SerialEepromError(Exception):
 class SerialEepromTimeout(SerialEepromError):
     """Exception thrown when a flash command cannot be completed in a timely
        manner"""
+
 
 class SerialEepromValueError(ValueError, SerialEepromError):
     """Exception thrown when a parameter is out of range"""
@@ -93,7 +92,7 @@ class I2c24AADevice(SerialEeprom):
     DEVICES = {
         128: (8, 1),
         256: (8, 1),
-        # the following devices require shifting slave addresses: 
+        # the following devices require shifting slave addresses:
         # not yet implemented
         # 512: (16, 1),
         # 1 << 10: (16, 1),
@@ -110,7 +109,7 @@ class I2c24AADevice(SerialEeprom):
         try:
             self._cache_size, self._addr_width = self.DEVICES[size]
         except KeyError:
-            raise SerialEepromValueError('Unsupported flash size: %d KiB' % 
+            raise SerialEepromValueError('Unsupported flash size: %d KiB' %
                                          size)
         self._size = size
         self._cache_mask = self._cache_size-1
@@ -121,7 +120,7 @@ class I2c24AADevice(SerialEeprom):
         try:
             return cls.DEVICES[size][1]
         except KeyError:
-            raise SerialEepromValueError('Unsupported flash size: %d KiB' % 
+            raise SerialEepromValueError('Unsupported flash size: %d KiB' %
                                          size)
 
     @property
@@ -153,7 +152,7 @@ class I2c24AADevice(SerialEeprom):
         else:
             offset = 0
         # aligned buffer
-        #chunks.append(self._slave.read_from(address, size-offset))
+        # chunks.append(self._slave.read_from(address, size-offset))
         while offset < size:
             wsize = min(csize, size-offset)
             chunks.append(self._slave.read_from(address, wsize))
@@ -186,11 +185,8 @@ class I2c24AADevice(SerialEeprom):
         print("Write @ 0x%04x %s" % (address, data))
         self._slave.write_to(address, data)
         last = now() + self.WRITE_CYCLE_TIME_MAX*4
-        while now()<last:
+        while now() < last:
             sleep(self.WRITE_CYCLE_TIME_MAX*4)
             break
-
-            #if self._slave.poll():
-            #    break
         else:
             raise SerialEepromTimeout('Device did not complete write cycle')
