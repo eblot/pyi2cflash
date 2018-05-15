@@ -24,7 +24,8 @@ from i2cflash.serialeeprom import SerialEepromManager
 from os import environ
 from pyftdi import FtdiLogger
 from pyftdi.misc import pretty_size
-from sys import stdout
+from random import randint, seed
+from sys import stdout, stderr
 from time import time as now
 import logging
 import unittest
@@ -36,6 +37,7 @@ class SerialEepromTestCase(unittest.TestCase):
     def setUpClass(cls):
         # FTDI device should be defined to your actual setup
         cls.ftdi_url = environ.get('FTDI_DEVICE', 'ftdi://ftdi:232h/1')
+        seed()
         print('Using FTDI device %s' % cls.ftdi_url)
 
     def setUp(self):
@@ -58,24 +60,27 @@ class SerialEepromTestCase(unittest.TestCase):
         """Short R/W test
         """
         baseaddr = 0x0034
-        tpl = 'This is an I2C EEPROM test %d. '
+        # use a pseudo-random number to ensure to consecutive run work, in
+        # the event where the write would silently fail and the read would
+        # read back the data stored from a previous session. The length of
+        # the string is also important to be sure to generate unaligned
+        # accesses.
+        tpl = 'This is %02x I2C EEPROM test %%d. ' % randint(0x00, 0xff)
         string = ''.join([tpl % count for count in range(20)])
         refstr = string.encode('ascii')
         delta = now()
         self.flash.write(baseaddr, refstr)
         delta = now()-delta
         data = self.flash.read(baseaddr, len(refstr))
-        print(refstr)
-        print(data)
         for n, (r, d) in enumerate(zip(refstr, data), start=1):
             if r != d:
-                print('Mismatch @ %d/0x%x' % (n, n))
+                print('Mismatch %s/%s @ 0x%x on %d bytes' %
+                      (r, d, n, len(refstr)), file=stderr)
                 break
         self.assertEqual(r, d, 'R/W mismatch')
         length = len(data)
         self._report_bw('Write', length, delta)
         data = self.flash.read(baseaddr+0x40, len(refstr)-0x40)
-        print(data)
 
     @classmethod
     def _report_bw(cls, action, length, time_):

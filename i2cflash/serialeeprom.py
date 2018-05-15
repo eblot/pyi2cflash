@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (c) 2017-2018, Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,9 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from pyftdi.i2c import I2cController
+from logging import getLogger
 from re import match
 from time import sleep, time as now
+from pyftdi.i2c import I2cController
 
 
 class SerialEepromError(Exception):
@@ -105,6 +106,7 @@ class I2c24AADevice(SerialEeprom):
     }
 
     def __init__(self, slave, size):
+        self.log = getLogger('pyftdi.i2c.eeprom')
         self._slave = slave
         try:
             self._cache_size, self._addr_width = self.DEVICES[size]
@@ -139,26 +141,8 @@ class I2c24AADevice(SerialEeprom):
         # read out reliability is greatly improved with short read sequence
         # we use the same chunk management as with write request to
         # align as much read requests as possible on device pages
-        print("Read @ 0x%04x" % (address))
-        chunks = []
-        # unaligned left hand side
-        left = address & self._cache_mask
-        csize = self._cache_size
-        if left:
-            length = csize - left
-            chunks.append(self._slave.read_from(address, length))
-            offset = length
-            address += length
-        else:
-            offset = 0
-        # aligned buffer
-        # chunks.append(self._slave.read_from(address, size-offset))
-        while offset < size:
-            wsize = min(csize, size-offset)
-            chunks.append(self._slave.read_from(address, wsize))
-            address += wsize
-            offset += wsize
-        return b''.join(chunks)
+        self.log.info('Read @ 0x%04x', address)
+        return self._slave.read_from(address, size).tobytes()
 
     def write(self, address, data):
         if address+len(data) > len(self):
@@ -182,7 +166,7 @@ class I2c24AADevice(SerialEeprom):
             offset += wsize
 
     def _do_write(self, address, data):
-        print("Write @ 0x%04x %s" % (address, data))
+        self.log.info('Write @ 0x%04x %s', address, data)
         self._slave.write_to(address, data)
         last = now() + self.WRITE_CYCLE_TIME_MAX*4
         while now() < last:
