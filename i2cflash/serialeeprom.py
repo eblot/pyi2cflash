@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018, Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (c) 2017-2019, Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,7 +22,8 @@
 from logging import getLogger
 from re import match
 from time import sleep, time as now
-from pyftdi.i2c import I2cController
+from typing import Iterable, Union
+from pyftdi.i2c import I2cController, I2cPort
 
 
 class SerialEepromError(Exception):
@@ -38,7 +39,7 @@ class SerialEepromValueError(ValueError, SerialEepromError):
     """Exception thrown when a parameter is out of range"""
 
 
-class SerialEeprom(object):
+class SerialEeprom:
     """Interface of a generic SPI flash device"""
 
     def read(self, address, length):
@@ -55,13 +56,46 @@ class SerialEeprom(object):
         raise NotImplementedError()
 
 
-class SerialEepromManager(object):
+class SerialEepromManager:
     """I2c flash manager.
     """
 
     @staticmethod
-    def get_flash_device(url, name, address=0x50, highspeed=False):
-        """Obtain an instance of the detected flash device"""
+    def get_from_controller(i2cctrl: I2cController,
+                            name: str, address: int = 0x50) -> SerialEeprom:
+        """Obtain an instance of the detected flash device, using an
+           existing SpiController.
+
+           :param i2cctrl: a PyFtdi configured I2cController instance
+           :param name: I2C EEPROM type
+           :param address: I2C slave address
+           :return: a concrete :py:class:`SerialEeprom` instance
+        """
+        size = SerialEepromManager.get_eeprom_size(name, address)
+        slave = i2cctrl.get_port(address)
+        flash = I2c24AADevice(slave, size)
+        return flash
+
+    @staticmethod
+    def get_flash_device(url: str, name: str, address: int = 0x50,
+                         highspeed: bool = False) -> SerialEeprom:
+        """Obtain an instance of the detected flash device.
+
+           :param url: FTDI url
+           :param name: I2C EEPROM type
+           :param address: I2C slave address
+           :param highspeed: whether to use a 400 KHz vs. 100 KHz clock
+           :return: a concrete :py:class:`SerialEeprom` instance
+        """
+        size = SerialEepromManager.get_eeprom_size(name, address)
+        ctrl = I2cController()
+        ctrl.configure(url, frequency=highspeed and 400E3 or 100E3)
+        slave = ctrl.get_port(address)
+        flash = I2c24AADevice(slave, size)
+        return flash
+
+    @staticmethod
+    def get_eeprom_size(name: str, address: int) -> int:
         mo = match(r'(?i)^24AA(?P<size>\d+)(?P<rev>[a-z]?)$', name)
         if not mo:
             raise SerialEepromValueError('Unsupported type: %s' % name)
@@ -77,12 +111,7 @@ class SerialEepromManager(object):
         if test_addr != 0x50:
             raise SerialEepromValueError('Invalid device address: 0x%02x' %
                                          address)
-        ctrl = I2cController()
-        ctrl.configure(url, frequency=highspeed and 400E3 or 100E3)
-        slave = ctrl.get_port(address)
-        flash = I2c24AADevice(slave, size)
-        return flash
-
+        return size
 
 class I2c24AADevice(SerialEeprom):
     """Generic flash device implementation.
@@ -105,7 +134,7 @@ class I2c24AADevice(SerialEeprom):
         64 << 10: (128, 2),
     }
 
-    def __init__(self, slave, size):
+    def __init__(self, slave: I2cPort, size: int):
         self.log = getLogger('pyftdi.i2c.eeprom')
         self._slave = slave
         try:
@@ -118,7 +147,11 @@ class I2c24AADevice(SerialEeprom):
         self._slave.configure_register(True, self._addr_width)
 
     @classmethod
-    def get_word_size(cls, size):
+    def get_word_size(cls, size: int) -> int:
+        """Return the SerialEepromt word size.
+
+           :return: word size in bytes.
+        """
         try:
             return cls.DEVICES[size][1]
         except KeyError:
@@ -126,14 +159,23 @@ class I2c24AADevice(SerialEeprom):
                                          size)
 
     @property
-    def capacity(self):
-        """Get the flash device capacity in bytes"""
+    def capacity(self) -> int:
+        """Get the flash device capacity.
+
+           :return: storage capacity in bytes.
+        """
         return self._size
 
     def __len__(self):
         return self._size
 
-    def read(self, address, size):
+    def read(self, address: int, size: int) -> bytes:
+        """Read data from SerialEeprom
+
+           :param address: address of the first byte read from the eeprom
+           :param int: count of bytes to read
+           :return: a byte buffer of read bytes
+        """
         if address+size > len(self):
             raise SerialEepromValueError('Out of range')
         # although it should not be necessary, it seems that reading out
@@ -144,7 +186,15 @@ class I2c24AADevice(SerialEeprom):
         self.log.info('Read @ 0x%04x', address)
         return self._slave.read_from(address, size).tobytes()
 
-    def write(self, address, data):
+    def write(self, address: int,
+              data: Union[bytes, bytearray, Iterable[int]]) -> None:
+        """Write data to SerialEeprom.
+
+           :param int: address of the first byte to write in SerialEeprom
+           :param data: data buffer to write
+        """
+        if not isinstance(data, (bytes, bytearray)):
+            data = bytes(data)
         if address+len(data) > len(self):
             raise SerialEepromValueError('Out of range')
         size = len(data)

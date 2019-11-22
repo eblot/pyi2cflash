@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Copyright (c) 2017, Emmanuel Blot <emmanuel.blot@free.fr>
+
+# Copyright (c) 2017-2019, Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,15 +21,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from i2cflash.serialeeprom import SerialEepromManager
+import logging
+import unittest
 from os import environ
-from pyftdi import FtdiLogger
-from pyftdi.misc import pretty_size
 from random import randint, seed
 from sys import stdout, stderr
 from time import time as now
-import logging
-import unittest
+from pyftdi import FtdiLogger
+from pyftdi.ftdi import Ftdi
+from pyftdi.i2c import I2cController
+from pyftdi.misc import pretty_size
+from pyftdi.usbtools import UsbTools
+from i2cflash.serialeeprom import SerialEepromManager
+
+#pylint: disable-msg=missing-docstring
 
 
 class SerialEepromTestCase(unittest.TestCase):
@@ -41,8 +47,7 @@ class SerialEepromTestCase(unittest.TestCase):
         print('Using FTDI device %s' % cls.ftdi_url)
 
     def setUp(self):
-        self.flash = SerialEepromManager.get_flash_device(self.ftdi_url,
-                                                          '24AA32A', 0x50)
+        self.flash = None
 
     def tearDown(self):
         del self.flash
@@ -50,6 +55,8 @@ class SerialEepromTestCase(unittest.TestCase):
     def test_flashdevice_1_read_bandwidth(self):
         """Read the whole device to get READ bandwith
         """
+        self.flash = SerialEepromManager.get_flash_device(self.ftdi_url,
+                                                          '24AA32A', 0x50)
         delta = now()
         data = self.flash.read(0, len(self.flash))
         delta = now()-delta
@@ -59,6 +66,8 @@ class SerialEepromTestCase(unittest.TestCase):
     def test_flashdevice_2_small_rw(self):
         """Short R/W test
         """
+        self.flash = SerialEepromManager.get_flash_device(self.ftdi_url,
+                                                          '24AA32A', 0x50)
         baseaddr = 0x0034
         # use a pseudo-random number to ensure to consecutive run work, in
         # the event where the write would silently fail and the read would
@@ -82,6 +91,22 @@ class SerialEepromTestCase(unittest.TestCase):
         self._report_bw('Write', length, delta)
         data = self.flash.read(baseaddr+0x40, len(refstr)-0x40)
 
+    def test_usb_device(self):
+        """Demo instanciation from an existing UsbDevice.
+        """
+        candidate = Ftdi.get_identifiers(self.ftdi_url)
+        usbdev = UsbTools.get_device(candidate[0])
+        i2c = I2cController(cs_count=1)
+        i2c.configure(usbdev, interface=candidate[1], frequency=100e3)
+        eeprom = SerialEepromManager.get_from_controller(i2c, '24AA32A', 0x50)
+
+    def test_i2c_controller(self):
+        """Demo instanciation with an I2cController.
+        """
+        i2c = I2cController()
+        i2c.configure(self.ftdi_url, frequency=100e3)
+        eeprom = SerialEepromManager.get_from_controller(i2c, '24AA32A', 0x50)
+
     @classmethod
     def _report_bw(cls, action, length, time_):
         if time_ < 1.0:
@@ -96,7 +121,7 @@ def suite():
     return unittest.makeSuite(SerialEepromTestCase, 'test')
 
 
-if __name__ == '__main__':
+def main():
     FtdiLogger.log.addHandler(logging.StreamHandler(stdout))
     level = environ.get('FTDI_LOGLEVEL', 'info').upper()
     try:
@@ -105,3 +130,7 @@ if __name__ == '__main__':
         raise ValueError('Invalid log level: %s', level)
     FtdiLogger.set_level(loglevel)
     unittest.main(defaultTest='suite')
+
+
+if __name__ == '__main__':
+    main()

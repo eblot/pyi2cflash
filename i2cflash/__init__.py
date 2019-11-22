@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2018, Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (c) 2017-2019, Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__version__ = '0.1.2'
+__version__ = '0.2.0'
 __title__ = 'pyi2cflash'
 __description__ = 'I2C eeprom device drivers (pure Python)'
 __uri__ = 'http://github.com/eblot/pyi2cflash'
@@ -27,4 +27,4 @@ __doc__ = __description__ + ' <' + __uri__ + '>'
 __author__ = 'Emmanuel Blot'
 __email__ = 'emmanuel.blot@free.fr'
 __license__ = 'MIT'
-__copyright__ = 'Copyright (c) 2017 Emmanuel Blot'
+__copyright__ = 'Copyright (c) 2017-2019 Emmanuel Blot'
