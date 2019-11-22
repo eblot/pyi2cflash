@@ -184,7 +184,7 @@ class I2c24AADevice(SerialEeprom):
         # we use the same chunk management as with write request to
         # align as much read requests as possible on device pages
         self.log.info('Read @ 0x%04x', address)
-        return self._slave.read_from(address, size).tobytes()
+        return self._slave.read_from(address, size)
 
     def write(self, address: int,
               data: Union[bytes, bytearray, Iterable[int]]) -> None:

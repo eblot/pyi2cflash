@@ -96,7 +96,7 @@ class SerialEepromTestCase(unittest.TestCase):
         """
         candidate = Ftdi.get_identifiers(self.ftdi_url)
         usbdev = UsbTools.get_device(candidate[0])
-        i2c = I2cController(cs_count=1)
+        i2c = I2cController()
         i2c.configure(usbdev, interface=candidate[1], frequency=100e3)
         eeprom = SerialEepromManager.get_from_controller(i2c, '24AA32A', 0x50)
 
