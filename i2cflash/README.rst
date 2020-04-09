@@ -1,6 +1,9 @@
 pyi2cflash
 ==========
 
+.. image:: https://github.com/eblot/pyi2cflash/workflows/Python%20package/badge.svg
+   :alt: Python package build status
+
 I2C eeprom device drivers (pure Python)
 
 I2C flash devices, also known as *DataFlash* are commonly found in embedded
