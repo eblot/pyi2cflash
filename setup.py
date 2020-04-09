@@ -36,7 +36,7 @@ from setuptools.command.build_py import build_py
 
 NAME = 'pyi2cflash'
 PACKAGES = find_packages(where='.')
-META_PATH = joinpath('spiflash', '__init__.py')
+META_PATH = joinpath('i2cflash', '__init__.py')
 KEYWORDS = ['driver', 'ftdi', 'usb', 'i2c', 'twi', 'flash', 'eeprom']
 CLASSIFIERS = [
     'Development Status :: 3 - Alpha',
