@@ -22,12 +22,13 @@
 # SOFTWARE.
 
 #pylint: disable-msg=no-self-use
+#pylint: disable-msg=broad-except
 
 from codecs import open as codec_open
 from os import close, unlink
 from os.path import abspath, dirname, join as joinpath
 from py_compile import compile as pycompile, PyCompileError
-from re import split as resplit, search as research
+from re import search as research
 from sys import stderr
 from tempfile import mkstemp
 from setuptools import find_packages, setup
@@ -55,7 +56,7 @@ CLASSIFIERS = [
     'Topic :: System :: Hardware :: Hardware Drivers',
 ]
 INSTALL_REQUIRES = [
-    'pyftdi >= 0.42, < 0.51'
+    'pyftdi >= 0.42, < 0.60'
 ]
 
 HERE = abspath(dirname(__file__))
@@ -131,6 +132,7 @@ class BuildPy(build_py):
 
 
 def main():
+    """Entry point."""
     setup(
         cmdclass={'build_py': BuildPy},
         name=NAME,
