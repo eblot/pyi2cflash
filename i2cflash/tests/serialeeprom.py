@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2017-2019, Emmanuel Blot <emmanuel.blot@free.fr>
+# Copyright (c) 2017-2020, Emmanuel Blot <emmanuel.blot@free.fr>
 # All rights reserved.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -56,7 +56,8 @@ class SerialEepromTestCase(unittest.TestCase):
         """Read the whole device to get READ bandwith
         """
         self.flash = SerialEepromManager.get_flash_device(self.ftdi_url,
-                                                          '24AA32A', 0x50)
+                                                          '24AA32A', 0x50,
+                                                          highspeed=True)
         delta = now()
         data = self.flash.read(0, len(self.flash))
         delta = now()-delta
